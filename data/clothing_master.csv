@@ -1,0 +1,234 @@
+Clothing ID,Division Name,Department Name,Class Name
+0,General,Bottoms,Skirts
+1,General,Bottoms,Pants
+2,General,Tops,Sweaters
+3,General,Dresses,Dresses
+4,General,Dresses,Dresses
+5,General,Tops,Sweaters
+6,General,Bottoms,Skirts
+7,General,Tops,Blouses
+8,Initmates,Intimate,Swim
+9,General,Tops,Knits
+10,General,Dresses,Dresses
+11,General,Tops,Fine gauge
+12,General,Bottoms,Skirts
+13,General,Bottoms,Pants
+14,General,Jackets,Outerwear
+15,General,Tops,Fine gauge
+16,General,Tops,Blouses
+17,General,Tops,Blouses
+18,General,Tops,Fine gauge
+19,General,Tops,Blouses
+20,General,Tops,Knits
+21,General,Dresses,Dresses
+22,General,Tops,Sweaters
+23,General,Tops,Blouses
+24,General,Tops,Sweaters
+25,General,Tops,Knits
+26,General,Bottoms,Pants
+27,General,Tops,Sweaters
+28,General,Bottoms,Skirts
+29,General,Bottoms,Pants
+30,General,Tops,Sweaters
+31,General,Bottoms,Jeans
+32,General,Tops,Blouses
+33,General,Bottoms,Shorts
+34,General,Bottoms,Skirts
+35,General,Tops,Blouses
+36,General,Dresses,Dresses
+37,General,Dresses,Dresses
+38,General,Dresses,Dresses
+39,General,Tops,Knits
+40,General,Tops,Sweaters
+41,General Petite,Tops,Knits
+42,General,Bottoms,Jeans
+43,General,Tops,Sweaters
+44,General,Dresses,Dresses
+45,General,Tops,Knits
+46,General,Tops,Blouses
+47,General,Dresses,Dresses
+48,Initmates,Intimate,Lounge
+49,General,Tops,Blouses
+50,General,Tops,Knits
+51,General,Jackets,Outerwear
+52,General,Tops,Knits
+53,General,Jackets,Jackets
+54,General,Dresses,Dresses
+55,Initmates,Intimate,Swim
+56,General,Dresses,Dresses
+57,General,Dresses,Dresses
+58,General,Tops,Knits
+59,General,Tops,Fine gauge
+60,General,Tops,Sweaters
+61,General,Bottoms,Jeans
+62,General,Tops,Knits
+63,General,Tops,Fine gauge
+64,General,Tops,Knits
+65,General,Tops,Blouses
+66,General,Dresses,Dresses
+67,General,Bottoms,Pants
+68,General,Tops,Sweaters
+69,General Petite,Intimate,Lounge
+70,General,Tops,Knits
+71,General,Bottoms,Pants
+72,General,Tops,Blouses
+73,General,Tops,Blouses
+74,General,Tops,Sweaters
+75,General,Jackets,Jackets
+76,Initmates,Intimate,Lounge
+77,General,Tops,Knits
+78,General,Dresses,Dresses
+79,Initmates,Intimate,Layering
+80,General,Tops,Knits
+81,General,Bottoms,Pants
+82,General,Bottoms,Shorts
+83,General,Tops,Knits
+84,General,Tops,Fine gauge
+85,Initmates,Intimate,Lounge
+86,General,Tops,Fine gauge
+87,General,Bottoms,Shorts
+88,General,Bottoms,Skirts
+89,General,Tops,Fine gauge
+90,General,Tops,Blouses
+91,General,Jackets,Jackets
+92,General,Bottoms,Jeans
+93,General,Jackets,Outerwear
+94,General,Tops,Knits
+95,General,Tops,Sweaters
+96,General,Bottoms,Pants
+97,Initmates,Intimate,Layering
+98,General,Tops,Blouses
+99,General,Bottoms,Shorts
+100,General,Bottoms,Skirts
+101,General,Dresses,Dresses
+102,General,Bottoms,Pants
+103,General,Tops,Knits
+104,General,Tops,Fine gauge
+105,General,Bottoms,Pants
+106,General,Bottoms,Jeans
+107,General,Bottoms,Jeans
+108,General Petite,Intimate,Lounge
+109,General,Tops,Sweaters
+110,General,Jackets,Jackets
+111,General,Tops,Fine gauge
+112,Initmates,Intimate,Lounge
+113,General,Tops,Knits
+114,General,Bottoms,Skirts
+115,General,Tops,Blouses
+116,General,Jackets,Jackets
+117,General,Jackets,Jackets
+118,General,Dresses,Dresses
+119,General,Tops,Blouses
+120,General Petite,Intimate,Lounge
+121,General,Trend,Trend
+122,General,Tops,Blouses
+123,General,Jackets,Jackets
+124,Initmates,Intimate,Legwear
+125,General,Tops,Blouses
+126,Initmates,Intimate,Lounge
+127,General Petite,Intimate,Lounge
+128,General,Tops,Knits
+129,General,Dresses,Dresses
+130,General,Jackets,Jackets
+131,General,Bottoms,Shorts
+132,Initmates,Intimate,Legwear
+133,General,Dresses,Dresses
+134,General,Tops,Blouses
+135,General,Bottoms,Pants
+136,General,Tops,Knits
+137,Initmates,Intimate,Legwear
+138,General,Bottoms,Pants
+139,General,Tops,Fine gauge
+140,General,Bottoms,Skirts
+141,General,Tops,Fine gauge
+142,General,Jackets,Jackets
+143,Initmates,Intimate,Lounge
+144,General,Tops,Blouses
+145,General,Trend,Trend
+146,General,Dresses,Dresses
+147,General,Tops,Blouses
+148,General,Dresses,Dresses
+149,Initmates,Intimate,Lounge
+150,Initmates,Intimate,Swim
+151,General,Tops,Sweaters
+152,General,Dresses,Dresses
+153,General,Bottoms,Skirts
+154,General,Tops,Fine gauge
+155,General,Tops,Knits
+156,General,Bottoms,Jeans
+157,Initmates,Intimate,Legwear
+158,General,Bottoms,Pants
+159,General,Tops,Fine gauge
+160,General,Tops,Blouses
+161,General,Jackets,Outerwear
+162,General,Tops,Blouses
+163,General,Bottoms,Jeans
+164,General,Dresses,Dresses
+165,General,Bottoms,Skirts
+166,General,Tops,Fine gauge
+167,General Petite,Intimate,Lounge
+168,General,Dresses,Dresses
+169,General,Tops,Knits
+170,General,Tops,Knits
+171,General,Tops,Fine gauge
+172,General,Tops,Blouses
+173,General,Bottoms,Jeans
+174,General,Tops,Knits
+175,General,Tops,Blouses
+176,General,Tops,Sweaters
+177,General,Tops,Knits
+178,General,Jackets,Outerwear
+179,General,Bottoms,Skirts
+180,General,Tops,Sweaters
+181,General,Dresses,Dresses
+182,General,Bottoms,Pants
+183,Initmates,Intimate,Lounge
+184,General,Bottoms,Pants
+185,Initmates,Intimate,Lounge
+186,General,Tops,Knits
+187,General,Bottoms,Jeans
+188,General Petite,Bottoms,Pants
+189,General,Tops,Sweaters
+190,General,Bottoms,Skirts
+191,General,Tops,Fine gauge
+192,General,Jackets,Outerwear
+193,General,Bottoms,Skirts
+194,General,Bottoms,Shorts
+195,General,Bottoms,Pants
+196,General,Dresses,Dresses
+197,General Petite,Intimate,Lounge
+198,General,Tops,Fine gauge
+199,General,Dresses,Dresses
+200,Initmates,Intimate,Lounge
+201,General,Tops,Sweaters
+202,General,Tops,Sweaters
+203,General,Jackets,Outerwear
+204,General,Tops,Knits
+205,General,Bottoms,Pants
+206,General Petite,Trend,Trend
+207,General,Bottoms,Jeans
+208,General,Tops,Knits
+209,General,Dresses,Dresses
+210,General,Jackets,Outerwear
+211,General,Tops,Knits
+212,General,Dresses,Dresses
+213,General,Trend,Trend
+214,General,Bottoms,Skirts
+215,General,Jackets,Outerwear
+216,General,Tops,Blouses
+217,General,Dresses,Dresses
+218,General,Bottoms,Pants
+219,General,Bottoms,Skirts
+220,General,Dresses,Dresses
+221,General,Bottoms,Pants
+222,General,Bottoms,Skirts
+223,General,Dresses,Dresses
+224,General,Jackets,Jackets
+225,General,Tops,Blouses
+226,General,Dresses,Dresses
+227,General,Tops,Sweaters
+228,General,Jackets,Outerwear
+229,General,Bottoms,Jeans
+230,General,Dresses,Dresses
+231,General,Dresses,Dresses
+232,General,Dresses,Dresses
