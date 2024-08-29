@@ -204,7 +204,7 @@ def predict_on_test(test_df, model_path, clothing_master_df):
 
 
 def main():
-    # wandb.init(project="atmacup_17", name=f"deberta_large_{CFG.VER}")
+    wandb.init(project="atmacup_17", name=f"deberta_large_{CFG.VER}")
     seed_everything(CFG.SEED)
 
     clothing_master_df = pd.read_csv(CFG.DATA_PATH / "clothing_master.csv")
@@ -215,7 +215,7 @@ def main():
     test_df = preprocessing(test_df, clothing_master_df)
     train_df["labels"] = train_df[CFG.target_col].astype(np.int8)
 
-    # train(train_df)
+    train(train_df)
 
     predict_on_test(
         test_df, f"deberta-large-seed{CFG.SEED}-Ver{CFG.VER}", clothing_master_df
