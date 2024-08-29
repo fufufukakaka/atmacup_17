@@ -162,7 +162,7 @@ def train(train_df):
 
 def predict_on_test(test_df, model_path, clothing_master_df):
     # kfold で学習したモデルを使ってテストデータを予測する
-    test_predictions = np.zeros((len(test_df), 1))
+    test_predictions = np.zeros((len(test_df), 2))
 
     for fold in range(CFG.N_SPLIT):
         config = AutoConfig.from_pretrained(f"{model_path}/deberta-large-fold{fold}")
@@ -175,7 +175,7 @@ def predict_on_test(test_df, model_path, clothing_master_df):
 
         test_dataset = Dataset.from_pandas(test_df[["prompt"]].copy())
         test_dataset = test_dataset.map(tokenize).remove_columns(
-            ["prompt", "__index_level_0__"]
+            ["prompt"]
         )
 
         trainer = Trainer(
@@ -204,6 +204,7 @@ def predict_on_test(test_df, model_path, clothing_master_df):
 
 
 def main():
+    # wandb.init(project="atmacup_17", name=f"deberta_large_{CFG.VER}")
     seed_everything(CFG.SEED)
 
     clothing_master_df = pd.read_csv(CFG.DATA_PATH / "clothing_master.csv")
@@ -214,9 +215,11 @@ def main():
     test_df = preprocessing(test_df, clothing_master_df)
     train_df["labels"] = train_df[CFG.target_col].astype(np.int8)
 
-    train(train_df)
+    # train(train_df)
 
-    predict_on_test(test_df, CFG.MODEL_PATH, tokenizer, clothing_master_df)
+    predict_on_test(
+        test_df, f"deberta-large-seed{CFG.SEED}-Ver{CFG.VER}", clothing_master_df
+    )
 
 
 if __name__ == "__main__":
