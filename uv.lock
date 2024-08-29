@@ -160,6 +160,7 @@ dependencies = [
     { name = "sentencepiece" },
     { name = "setuptools" },
     { name = "torch" },
+    { name = "tqdm" },
     { name = "transformers" },
     { name = "wandb" },
 ]
@@ -175,6 +176,7 @@ requires-dist = [
     { name = "sentencepiece", specifier = ">=0.2.0" },
     { name = "setuptools", specifier = ">=74.0.0" },
     { name = "torch", specifier = ">=2.4.0" },
+    { name = "tqdm", specifier = ">=4.66.5" },
     { name = "transformers", specifier = ">=4.19.0" },
     { name = "wandb", specifier = ">=0.17.8" },
 ]
