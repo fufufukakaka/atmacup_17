@@ -21,7 +21,7 @@ os.environ["WANDB_LOG_MODEL"] = "false"
 
 
 class CFG:
-    VER = 1
+    VER = 2
     AUTHOR = "fufufukakaka"
     COMPETITION = "atmacup17"
     DATA_PATH = Path("data")
@@ -69,7 +69,7 @@ def main():
     seed_everything(CFG.SEED)
 
     clothing_master_df = pd.read_csv(CFG.DATA_PATH / "clothing_master.csv")
-    train_df = pd.read_csv(CFG.DATA_PATH / "train.csv").head(100)
+    train_df = pd.read_csv(CFG.DATA_PATH / "train.csv")
     test_df = pd.read_csv(CFG.DATA_PATH / "test.csv")
 
     train_df = preprocessing(train_df, clothing_master_df)

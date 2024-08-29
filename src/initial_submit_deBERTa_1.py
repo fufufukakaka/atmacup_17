@@ -78,59 +78,7 @@ def compute_metrics(p):
     return {"auc": score}
 
 
-def predict_on_test(test_df, model_path, tokenizer, clothing_master_df):
-    # モデルとトークナイザーをロード
-    config = AutoConfig.from_pretrained(model_path)
-    model = AutoModelForSequenceClassification.from_pretrained(
-        model_path, config=config
-    )
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
-
-    # テストデータの前処理
-    test_df = preprocessing(test_df, clothing_master_df)
-
-    # トークン化
-    test_df["prompt"] = test_df["Title"] + " " + test_df["Review Text"]
-    test_dataset = Dataset.from_pandas(test_df[["prompt"]].copy())
-    test_dataset = test_dataset.map(tokenize).remove_columns(
-        ["prompt", "__index_level_0__"]
-    )
-
-    # Trainerを使って予測
-    trainer = Trainer(
-        model=model,
-        args=TrainingArguments(
-            output_dir="./temp", per_device_eval_batch_size=4, no_cuda=not CFG.USE_GPU
-        ),
-        tokenizer=tokenizer,
-    )
-
-    # 予測の実行
-    predictions = trainer.predict(test_dataset).predictions
-    predictions = torch.softmax(torch.tensor(predictions), dim=1).numpy()
-
-    # 予測結果をデータフレームに追加
-    submission = pd.DataFrame()
-    submission["target"] = predictions[:, 1]
-
-    # 予測結果をCSVファイルに保存
-    submission.to_csv(
-        f"./predictions/deberta-large-seed{CFG.SEED}-Ver{CFG.VER}_test_predictions.csv",
-        index=False,
-    )
-
-
-def main():
-    seed_everything(CFG.SEED)
-
-    clothing_master_df = pd.read_csv(CFG.DATA_PATH / "clothing_master.csv")
-    train_df = pd.read_csv(CFG.DATA_PATH / "train.csv")
-    test_df = pd.read_csv(CFG.DATA_PATH / "test.csv")
-
-    train_df = preprocessing(train_df, clothing_master_df)
-    test_df = preprocessing(test_df, clothing_master_df)
-    train_df["labels"] = train_df[CFG.target_col].astype(np.int8)
-
+def train(train_df):
     predictions = np.zeros((len(train_df), CFG.target_col_class_num))
 
     kfold = StratifiedKFold(n_splits=CFG.N_SPLIT, shuffle=True, random_state=CFG.SEED)
@@ -210,6 +158,63 @@ def main():
         train_df["labels"], train_df[f"deberta_large_Ver{CFG.VER}_pred_prob"]
     )
     wandb.log({"OOF AUC": _auc})
+
+
+def predict_on_test(test_df, model_path, clothing_master_df):
+    # kfold で学習したモデルを使ってテストデータを予測する
+    test_predictions = np.zeros((len(test_df), 1))
+
+    for fold in range(CFG.N_SPLIT):
+        config = AutoConfig.from_pretrained(f"{model_path}/deberta-large-fold{fold}")
+        model = AutoModelForSequenceClassification.from_pretrained(
+            f"{model_path}/deberta-large-fold{fold}", config=config
+        )
+        tokenizer = AutoTokenizer.from_pretrained(
+            f"{model_path}/deberta-large-fold{fold}"
+        )
+
+        test_dataset = Dataset.from_pandas(test_df[["prompt"]].copy())
+        test_dataset = test_dataset.map(tokenize).remove_columns(
+            ["prompt", "__index_level_0__"]
+        )
+
+        trainer = Trainer(
+            model=model,
+            args=TrainingArguments(
+                output_dir="./temp",
+                per_device_eval_batch_size=4,
+                no_cuda=not CFG.USE_GPU,
+            ),
+            tokenizer=tokenizer,
+        )
+
+        test_predictions += torch.softmax(
+            torch.tensor(trainer.predict(test_dataset).predictions), dim=1
+        ).numpy()
+
+    test_predictions /= CFG.N_SPLIT
+    submission = pd.DataFrame()
+    submission["target"] = test_predictions[:, 1]
+
+    # # 予測結果をCSVファイルに保存
+    submission.to_csv(
+        f"./predictions/deberta-large-seed{CFG.SEED}-Ver{CFG.VER}_test_predictions.csv",
+        index=False,
+    )
+
+
+def main():
+    seed_everything(CFG.SEED)
+
+    clothing_master_df = pd.read_csv(CFG.DATA_PATH / "clothing_master.csv")
+    train_df = pd.read_csv(CFG.DATA_PATH / "train.csv")
+    test_df = pd.read_csv(CFG.DATA_PATH / "test.csv")
+
+    train_df = preprocessing(train_df, clothing_master_df)
+    test_df = preprocessing(test_df, clothing_master_df)
+    train_df["labels"] = train_df[CFG.target_col].astype(np.int8)
+
+    train(train_df)
 
     predict_on_test(test_df, CFG.MODEL_PATH, tokenizer, clothing_master_df)
 
