@@ -164,4 +164,5 @@ cython_debug/
 models
 oof
 deberta-large-seed0-Ver1
+deberta-large-seed0-Ver6
 wandb
