@@ -1,3 +1,4 @@
+import cloudpickle
 import lightgbm as lgb
 import numpy as np
 import pandas as pd
@@ -138,6 +139,8 @@ def main():
             emb_list.append(batch_embs.detach().cpu().numpy())
         embeddings[key] = np.concatenate(emb_list)
 
+    cloudpickle.dump(embeddings, open("e5_large_embeddings.pkl", "wb"))
+
     # label encodingする
     oe = OrdinalEncoder()
     cloth_df[["Division Name", "Department Name", "Class Name"]] = oe.fit_transform(
@@ -188,6 +191,7 @@ def main():
     }
     except_cols = ["Review Text", "Title", "text", "Recommended IND", "Rating"]
     features = [col for col in train_df.columns if col not in except_cols]
+    features = features + ["Cloth Rating Mean", "Cloth Rating Var"]
 
     # とりあえず StratifiedKFold で分割
     skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=0)
@@ -197,18 +201,20 @@ def main():
     for fold_ix, (trn_, val_) in enumerate(
         skf.split(train_df, train_df["Recommended IND"])
     ):
+        if fold_ix != 0:
+            train_df = train_df.drop(["Cloth Rating Mean", "Cloth Rating Var"], axis=1)
+            test_df = test_df.drop(["Cloth Rating Mean", "Cloth Rating Var"], axis=1)
+
         # fold ごとの train_df から Clothing ID に対する Rating Mean, Var を計算
         train_fold_df = train_df.iloc[trn_]
         cloth_df = train_fold_df.groupby("Clothing ID")[["Rating"]].agg(["mean", "var"])
-        cloth_df.columns = ["Rating Mean", "Rating Var"]
+        cloth_df.columns = ["Cloth Rating Mean", "Cloth Rating Var"]
         cloth_df = cloth_df.reset_index()
-        cloth_df["Cloth Rating_Mean"] = cloth_df["Rating Mean"].fillna(0)
-        cloth_df["Cloth Rating_Var"] = cloth_df["Rating Var"].fillna(0)
+        cloth_df["Cloth Rating Mean"] = cloth_df["Cloth Rating Mean"].fillna(0)
+        cloth_df["Cloth Rating Var"] = cloth_df["Cloth Rating Var"].fillna(0)
 
         train_df = train_df.merge(cloth_df, how="left", on="Clothing ID")
         test_df = test_df.merge(cloth_df, how="left", on="Clothing ID")
-
-        features.append(["Cloth Rating Mean", "Cloth Rating Var"])
 
         trn_x = train_df.loc[trn_, features]
         trn_y = train_df.loc[trn_, "Recommended IND"]
