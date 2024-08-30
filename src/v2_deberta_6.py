@@ -27,7 +27,7 @@ os.environ["WANDB_LOG_MODEL"] = "checkpoint"
 
 
 class CFG:
-    VER = 6
+    VER = 7
     AUTHOR = "fufufukakaka"
     COMPETITION = "atmacup17"
     DATA_PATH = Path("data")
@@ -38,7 +38,7 @@ class CFG:
     STEPS = 25
     USE_GPU = torch.cuda.is_available()
     SEED = 0
-    N_SPLIT = 2
+    N_SPLIT = 5
     target_col = "Recommended IND"
     target_col_class_num = 2
     metric = "auc"
