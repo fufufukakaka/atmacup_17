@@ -17,4 +17,5 @@ dependencies = [
     "accelerate>=0.33.0",
     "lightgbm>=4.5.0",
     "tqdm>=4.66.5",
+    "cloudpickle>=3.0.0",
 ]

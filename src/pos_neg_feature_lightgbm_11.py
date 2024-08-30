@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import torch
 from sklearn.metrics import roc_auc_score
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import KFold, StratifiedKFold
 from sklearn.preprocessing import OrdinalEncoder
 from torch.utils.data.dataloader import DataLoader
 from torch.utils.data.dataset import Dataset
@@ -18,33 +18,6 @@ distilled_student_sentiment_classifier = pipeline(
 )
 
 import wandb
-
-MODEL_ID = "intfloat/multilingual-e5-large"
-tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
-
-
-class EmbDataset(Dataset):
-    def __init__(self, texts, max_length=192):
-        self.texts = texts
-        self.tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
-        self.max_length = max_length
-
-    def __len__(self):
-        return len(self.texts)
-
-    def __getitem__(self, ix):
-        token = self.tokenizer(
-            self.texts[ix],
-            max_length=self.max_length,
-            padding="max_length",
-            truncation=True,
-            return_token_type_ids=True,
-        )
-        return {
-            "input_ids": torch.LongTensor(token["input_ids"]),
-            "attention_mask": torch.LongTensor(token["attention_mask"]),
-            "token_type_ids": torch.LongTensor(token["token_type_ids"]),
-        }
 
 
 def cloth_rating_mean_var(train_df, test_df, cloth_df):
@@ -69,19 +42,14 @@ def main():
     cloth_df = pd.read_csv("data/clothing_master.csv")
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    model = AutoModel.from_pretrained(MODEL_ID).to(device)
     train_df["text"] = (
-        "TITLE: "
-        + train_df["Title"].fillna("none")
-        + " [SEP] "
-        + "Review Text: "
+        train_df["Title"].fillna("none")
+        + "[SEP]"
         + train_df["Review Text"].fillna("none")
     )
     test_df["text"] = (
-        "TITLE: "
-        + test_df["Title"].fillna("none")
-        + " [SEP] "
-        + "Review Text: "
+        test_df["Title"].fillna("none")
+        + "[SEP]"
         + test_df["Review Text"].fillna("none")
     )
 
@@ -109,37 +77,6 @@ def main():
     test_df["neutral_score"] = neutral_scores
     test_df["negative_score"] = neg_scores
 
-    # embeddings = {}
-    # for key, df in zip(["train", "test"], [train_df, test_df]):
-    #     emb_list = []
-    #     dataset = EmbDataset(df["text"].values, max_length=192)
-    #     data_loader = DataLoader(
-    #         dataset,
-    #         batch_size=256,
-    #         num_workers=0,
-    #         shuffle=False,
-    #     )
-    #     bar = tqdm(enumerate(data_loader), total=len(data_loader))
-    #     for iter_i, batch in bar:
-    #         # input
-    #         input_ids = batch["input_ids"].to(device)
-    #         attention_mask = batch["attention_mask"].to(device)
-    #         token_type_ids = batch["token_type_ids"].to(device)
-
-    #         with torch.no_grad():
-    #             last_hidden_state, pooler_output, hidden_state = model(
-    #                 input_ids=input_ids,
-    #                 attention_mask=attention_mask,
-    #                 token_type_ids=token_type_ids,
-    #                 output_hidden_states=True,
-    #                 return_dict=False,
-    #             )
-    #             batch_embs = last_hidden_state.mean(dim=1)
-
-    #         emb_list.append(batch_embs.detach().cpu().numpy())
-    #     embeddings[key] = np.concatenate(emb_list)
-
-    # cloudpickle.dump(embeddings, open("e5_large_embeddings.pkl", "wb"))
     embeddings = cloudpickle.load(open("e5_large_embeddings.pkl", "rb"))
 
     # label encodingする
@@ -150,7 +87,32 @@ def main():
     # train testにマージ
     train_df = train_df.merge(cloth_df, how="left", on="Clothing ID")
     test_df = test_df.merge(cloth_df, how="left", on="Clothing ID")
-    # 特徴量作成はベースラインなのでスキップ
+
+    # 特徴量作成
+    def get_kfold(train, n_splits, seed):
+        kf = KFold(n_splits=n_splits, shuffle=True, random_state=seed)
+        fold_series = []
+        for fold, (idx_train, idx_valid) in enumerate(kf.split(train)):
+            fold_series.append(pd.Series(fold, index=idx_valid))
+        fold_series = pd.concat(fold_series).sort_index()
+        return fold_series
+
+    def get_targetencoding(train, test, folds: pd.Series, col: str, target_col):
+        for fold in folds.unique():
+            idx_train, idx_valid = (folds != fold), (folds == fold)
+            group = train[idx_train].groupby(col)[target_col].mean().to_dict()
+            train.loc[idx_valid, f"target_{col}"] = train.loc[idx_valid, col].map(group)
+        group = train.groupby(col)[target_col].mean().to_dict()
+        test[f"target_{col}"] = test[col].map(group)
+        return train, test
+
+    folds = get_kfold(train_df, 5, 42)
+    cat_cols = ["Clothing ID", "Class Name"]
+    for col in cat_cols:
+        train_df, test_df = get_targetencoding(
+            train_df, test_df, folds, col, target_col="Recommended IND"
+        )
+
     # embeddingをマージ
 
     train_df = pd.concat(
@@ -192,7 +154,7 @@ def main():
     }
     except_cols = ["Review Text", "Title", "text", "Recommended IND", "Rating"]
     features = [col for col in train_df.columns if col not in except_cols]
-    features = features + ["Cloth Rating Mean", "Cloth Rating Var"]
+    # features = features + ["Cloth Rating Mean", "Cloth Rating Var"]
 
     # とりあえず StratifiedKFold で分割
     skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=0)
@@ -202,20 +164,20 @@ def main():
     for fold_ix, (trn_, val_) in enumerate(
         skf.split(train_df, train_df["Recommended IND"])
     ):
-        if fold_ix != 0:
-            train_df = train_df.drop(["Cloth Rating Mean", "Cloth Rating Var"], axis=1)
-            test_df = test_df.drop(["Cloth Rating Mean", "Cloth Rating Var"], axis=1)
+        # if fold_ix != 0:
+        #     train_df = train_df.drop(["Cloth Rating Mean", "Cloth Rating Var"], axis=1)
+        #     test_df = test_df.drop(["Cloth Rating Mean", "Cloth Rating Var"], axis=1)
 
-        # fold ごとの train_df から Clothing ID に対する Rating Mean, Var を計算
-        train_fold_df = train_df.iloc[trn_]
-        cloth_df = train_fold_df.groupby("Clothing ID")[["Rating"]].agg(["mean", "var"])
-        cloth_df.columns = ["Cloth Rating Mean", "Cloth Rating Var"]
-        cloth_df = cloth_df.reset_index()
-        cloth_df["Cloth Rating Mean"] = cloth_df["Cloth Rating Mean"].fillna(0)
-        cloth_df["Cloth Rating Var"] = cloth_df["Cloth Rating Var"].fillna(0)
+        # # fold ごとの train_df から Clothing ID に対する Rating Mean, Var を計算
+        # train_fold_df = train_df.iloc[trn_]
+        # cloth_df = train_fold_df.groupby("Clothing ID")[["Rating"]].agg(["mean", "var"])
+        # cloth_df.columns = ["Cloth Rating Mean", "Cloth Rating Var"]
+        # cloth_df = cloth_df.reset_index()
+        # cloth_df["Cloth Rating Mean"] = cloth_df["Cloth Rating Mean"].fillna(0)
+        # cloth_df["Cloth Rating Var"] = cloth_df["Cloth Rating Var"].fillna(0)
 
-        train_df = train_df.merge(cloth_df, how="left", on="Clothing ID")
-        test_df = test_df.merge(cloth_df, how="left", on="Clothing ID")
+        # train_df = train_df.merge(cloth_df, how="left", on="Clothing ID")
+        # test_df = test_df.merge(cloth_df, how="left", on="Clothing ID")
 
         trn_x = train_df.loc[trn_, features]
         trn_y = train_df.loc[trn_, "Recommended IND"]
@@ -239,7 +201,7 @@ def main():
 
     sub_df = pd.read_csv("data/sample_submission.csv")
     sub_df["target"] = preds
-    sub_df.to_csv("predictions/pos_rating_lightgbm_10.csv", index=False)
+    sub_df.to_csv("predictions/pos_rating_lightgbm_11.csv", index=False)
 
 
 if __name__ == "__main__":
