@@ -55,6 +55,7 @@ def main():
     cloth_df = pd.read_csv("data/clothing_master.csv")
 
     # ラベル平滑化(普通に)
+    train_labels = train_df["Recommended IND"].values
     train_df["Recommended IND"] = train_df["Recommended IND"].replace(
         {1: 0.95, 0: 0.05}
     )
@@ -71,29 +72,29 @@ def main():
         + test_df["Review Text"].fillna("none")
     )
 
-    pos_scores = []
-    neg_scores = []
-    neutral_scores = []
-    for _title in tqdm(train_df["text"].values):
-        _res = distilled_student_sentiment_classifier(_title, max_length=512)
-        pos_scores.append(_res[0][0]["score"])
-        neutral_scores.append(_res[0][1]["score"])
-        neg_scores.append(_res[0][2]["score"])
-    train_df["positive_score"] = pos_scores
-    train_df["neutral_score"] = neutral_scores
-    train_df["negative_score"] = neg_scores
+    # pos_scores = []
+    # neg_scores = []
+    # neutral_scores = []
+    # for _title in tqdm(train_df["text"].values):
+    #     _res = distilled_student_sentiment_classifier(_title, max_length=512)
+    #     pos_scores.append(_res[0][0]["score"])
+    #     neutral_scores.append(_res[0][1]["score"])
+    #     neg_scores.append(_res[0][2]["score"])
+    # train_df["positive_score"] = pos_scores
+    # train_df["neutral_score"] = neutral_scores
+    # train_df["negative_score"] = neg_scores
 
-    pos_scores = []
-    neg_scores = []
-    neutral_scores = []
-    for _title in tqdm(test_df["text"].values):
-        _res = distilled_student_sentiment_classifier(_title, max_length=512)
-        pos_scores.append(_res[0][0]["score"])
-        neutral_scores.append(_res[0][1]["score"])
-        neg_scores.append(_res[0][2]["score"])
-    test_df["positive_score"] = pos_scores
-    test_df["neutral_score"] = neutral_scores
-    test_df["negative_score"] = neg_scores
+    # pos_scores = []
+    # neg_scores = []
+    # neutral_scores = []
+    # for _title in tqdm(test_df["text"].values):
+    #     _res = distilled_student_sentiment_classifier(_title, max_length=512)
+    #     pos_scores.append(_res[0][0]["score"])
+    #     neutral_scores.append(_res[0][1]["score"])
+    #     neg_scores.append(_res[0][2]["score"])
+    # test_df["positive_score"] = pos_scores
+    # test_df["neutral_score"] = neutral_scores
+    # test_df["negative_score"] = neg_scores
 
     embeddings = cloudpickle.load(open("e5_large_embeddings.pkl", "rb"))
 
@@ -144,7 +145,13 @@ def main():
         "min_child_samples": 20,
         "seed": 42,
     }
-    except_cols = ["Review Text", "Title", "text", "Recommended IND", "Rating"]
+    except_cols = [
+        "Review Text",
+        "Title",
+        "text",
+        "Recommended IND",
+        "Rating",
+    ]
     features = [col for col in train_df.columns if col not in except_cols]
 
     # とりあえず StratifiedKFold で分割
@@ -153,7 +160,7 @@ def main():
     preds = np.zeros(test_df.shape[0])
 
     for fold_ix, (trn_, val_) in enumerate(
-        skf.split(train_df, train_df["Recommended IND"])
+        skf.split(train_df, train_labels)
     ):
 
         trn_x = train_df.loc[trn_, features]
@@ -163,6 +170,7 @@ def main():
 
         trn_data = lgb.Dataset(trn_x, label=trn_y)
         val_data = lgb.Dataset(val_x, label=val_y)
+        import pdb; pdb.set_trace()
         lgb_model = lgb.train(
             lgb_params,
             trn_data,
@@ -173,7 +181,7 @@ def main():
         oof[val_] = lgb_model.predict(val_x)
         preds += lgb_model.predict(test_df[features]) / skf.n_splits
 
-    cv_score = roc_auc_score(train_df["Recommended IND"], oof)
+    cv_score = roc_auc_score(train_labels, oof)
     wandb.log({"AUC": cv_score})
 
     sub_df = pd.read_csv("data/sample_submission.csv")

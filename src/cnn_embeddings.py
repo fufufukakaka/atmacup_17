@@ -64,14 +64,17 @@ class EmbeddingCNN(nn.Module):
         self.relu = nn.ReLU()
         self.maxpool = nn.MaxPool1d(kernel_size=2)
         self.dropout = nn.Dropout(p=0.5)
+        self.bn1 = nn.BatchNorm1d(64)
+        self.bn2 = nn.BatchNorm1d(128)
+        self.bn3 = nn.BatchNorm1d(256)
 
     def forward(self, x):
-        x = x.unsqueeze(1)  # Add channel dimension
-        x = self.relu(self.conv1(x))
+        x = x.unsqueeze(1)
+        x = self.relu(self.bn1(self.conv1(x)))
         x = self.maxpool(x)
-        x = self.relu(self.conv2(x))
+        x = self.relu(self.bn2(self.conv2(x)))
         x = self.maxpool(x)
-        x = self.relu(self.conv3(x))
+        x = self.relu(self.bn3(self.conv3(x)))
         x = self.maxpool(x)
         x = x.view(x.size(0), -1)
         x = self.relu(self.fc1(x))
@@ -247,6 +250,10 @@ def main():
     # Calculate overall performance
     overall_auc = roc_auc_score(train_labels, oof_preds)
     print(f"Overall AUC: {overall_auc:.4f}")
+
+    # save train predictions
+    train_df["cnn_embeddings_oof_preds"] = oof_preds
+    train_df.to_csv("predictions/cnn_embeddings_oof_preds.csv", index=False)
 
     # wandb.log({"Overall AUC": overall_auc, "Fold AUC Scores": fold_scores})
 
