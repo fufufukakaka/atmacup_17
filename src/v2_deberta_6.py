@@ -27,15 +27,16 @@ os.environ["WANDB_LOG_MODEL"] = "checkpoint"
 
 
 class CFG:
-    VER = 7
+    VER = 20
     AUTHOR = "fufufukakaka"
     COMPETITION = "atmacup17"
     DATA_PATH = Path("data")
     OOF_DATA_PATH = Path("oof")
     MODEL_DATA_PATH = Path("models")
-    MODEL_PATH = "microsoft/deberta-v3-large"
+    TOKENIZER_PATH = "microsoft/deberta-v3-large"
+    MODEL_PATH = "pretrained_models"
     MAX_LENGTH = 256
-    STEPS = 25
+    STEPS = 100
     USE_GPU = torch.cuda.is_available()
     SEED = 0
     N_SPLIT = 5
@@ -63,7 +64,7 @@ def preprocessing(df, clothing_master_df):
     return df
 
 
-tokenizer = AutoTokenizer.from_pretrained(CFG.MODEL_PATH)
+tokenizer = AutoTokenizer.from_pretrained(CFG.TOKENIZER_PATH)
 
 
 def tokenize(sample):
@@ -121,7 +122,7 @@ def train(train_df):
             save_safetensors=True,
             seed=CFG.SEED,
             data_seed=CFG.SEED,
-            load_best_model_at_end=True,
+            load_best_model_at_end=False,
         )
 
         config = AutoConfig.from_pretrained(CFG.MODEL_PATH)
@@ -216,7 +217,7 @@ def main():
     test_df = preprocessing(test_df, clothing_master_df)
     train_df["labels"] = train_df[CFG.target_col].astype(np.int8)
 
-    train(train_df)
+    # train(train_df)
 
     predict_on_test(
         test_df, f"deberta-large-seed{CFG.SEED}-Ver{CFG.VER}", clothing_master_df
