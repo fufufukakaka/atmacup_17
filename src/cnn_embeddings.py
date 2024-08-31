@@ -73,10 +73,13 @@ def main():
     # Load data
     train_df = pd.read_csv("data/train.csv")
     test_df = pd.read_csv("data/test.csv")
+    embeddings = cloudpickle.load(open("e5_large_embeddings.pkl", "rb"))
 
-    # load npy(SRF mistral) file
-    train_embeddings = np.load("train_embeddings.npy")
-    test_embeddings = np.load("test_embeddings.npy")
+    # Prepare the dataset
+    # train_embeddings = np.load("train_embeddings.npy")
+    # test_embeddings = np.load("test_embeddings.npy")
+    train_embeddings = embeddings["train"]
+    test_embeddings = embeddings["test"]
     train_labels = train_df["Recommended IND"].values
 
     # Initialize StratifiedKFold
