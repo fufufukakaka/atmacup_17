@@ -166,3 +166,6 @@ oof
 deberta-large-seed0-Ver1
 deberta-large-seed0-Ver6
 wandb
+results
+pretrained_models
+cnn_best_models
