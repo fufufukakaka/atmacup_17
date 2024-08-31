@@ -36,7 +36,7 @@ def cloth_rating_mean_var(train_df, test_df, cloth_df):
 
 
 def main():
-    wandb.init(project="atmacup_17", name="lightgbm_12")
+    wandb.init(project="atmacup_17", name="lightgbm_13")
 
     train_df = pd.read_csv("data/train.csv")
     test_df = pd.read_csv("data/test.csv")
@@ -143,14 +143,14 @@ def main():
         "learning_rate": 0.01,
         "verbosity": -1,
         "boosting_type": "gbdt",
-        # "lambda_l1": 0.3,
-        # "lambda_l2": 0.3,
-        # "max_depth": 6,
-        # "num_leaves": 128,
-        # "feature_fraction": 0.8,
-        # "bagging_fraction": 0.8,
-        # "bagging_freq": 1,
-        # "min_child_samples": 20,
+        "lambda_l1": 0.3,
+        "lambda_l2": 0.3,
+        "max_depth": 6,
+        "num_leaves": 128,
+        "feature_fraction": 0.8,
+        "bagging_fraction": 0.8,
+        "bagging_freq": 1,
+        "min_child_samples": 20,
         "seed": 42,
     }
     except_cols = ["Review Text", "Title", "text", "Recommended IND", "Rating"]
@@ -187,7 +187,7 @@ def main():
 
         trn_data = lgb.Dataset(trn_x, label=trn_y)
         val_data = lgb.Dataset(val_x, label=val_y)
-        lgb_model = opt_lgb.train(
+        lgb_model = lgb.train(
             lgb_params,
             trn_data,
             valid_sets=[trn_data, val_data],
@@ -205,7 +205,7 @@ def main():
 
     sub_df = pd.read_csv("data/sample_submission.csv")
     sub_df["target"] = preds
-    sub_df.to_csv("predictions/pos_rating_lightgbm_12.csv", index=False)
+    sub_df.to_csv("predictions/pos_rating_lightgbm_13.csv", index=False)
 
 
 if __name__ == "__main__":
