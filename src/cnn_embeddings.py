@@ -1,3 +1,5 @@
+import os
+
 import cloudpickle
 import numpy as np
 import pandas as pd
@@ -66,7 +68,7 @@ class EmbeddingDataset(Dataset):
 
 
 def main():
-    # wandb.init(project="cnn_embeddings_classification_kfold")
+    # wandb.init(project="cnn_embeddings_classification_stratified_kfold")
 
     # Load data
     train_df = pd.read_csv("data/train.csv")
@@ -78,11 +80,19 @@ def main():
     test_embeddings = embeddings["test"]
     train_labels = train_df["Recommended IND"].values
 
-    # Initialize K-Fold
+    # Initialize StratifiedKFold
     skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
     oof_preds = np.zeros(len(train_df))
     test_preds = np.zeros(len(test_df))
     fold_scores = []
+
+    # Early stopping parameters
+    patience = 3
+    best_val_auc = -np.inf
+    patience_counter = 0
+
+    # Directory to save the best models
+    os.makedirs("cnn_best_models", exist_ok=True)
 
     # Loop over each fold
     for fold, (train_idx, val_idx) in enumerate(
@@ -111,8 +121,12 @@ def main():
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-        # Training loop
-        num_epochs = 10
+        best_model_path = f"cnn_best_models/best_model_fold_{fold + 1}.pth"
+        best_val_auc = -np.inf
+        patience_counter = 0
+
+        # Training loop with early stopping
+        num_epochs = 20
 
         for epoch in range(num_epochs):
             model.train()
@@ -160,24 +174,42 @@ def main():
                 f"Epoch {epoch + 1}/{num_epochs}, Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}, Val AUC: {val_auc:.4f}"
             )
 
-        fold_score = roc_auc_score(val_labels, val_preds)
+            # Early stopping and save the best model
+            if val_auc > best_val_auc:
+                best_val_auc = val_auc
+                torch.save(model.state_dict(), best_model_path)
+                patience_counter = 0
+            else:
+                patience_counter += 1
+                if patience_counter >= patience:
+                    print(f"Early stopping at epoch {epoch + 1}")
+                    break
+
+        fold_score = best_val_auc
         fold_scores.append(fold_score)
 
+        # Load the best model and predict on the validation and test sets
+        model.load_state_dict(torch.load(best_model_path))
+        model.eval()
+
         # Store out-of-fold predictions
-        oof_preds[val_idx] = val_preds
-
-        # Predict on the test set
-        fold_test_preds = []
-
         with torch.no_grad():
+            val_preds = []
+            for batch_embeddings, _ in val_loader:
+                batch_embeddings = batch_embeddings.to(device)
+                outputs = model(batch_embeddings)
+                val_preds.extend(torch.softmax(outputs, dim=1)[:, 1].cpu().numpy())
+            oof_preds[val_idx] = val_preds
+
+            # Predict on the test set
+            fold_test_preds = []
             for batch_embeddings in test_loader:
                 batch_embeddings = batch_embeddings.to(device)
                 outputs = model(batch_embeddings)
                 fold_test_preds.extend(
                     torch.softmax(outputs, dim=1)[:, 1].cpu().numpy()
                 )
-
-        test_preds += np.array(fold_test_preds) / skf.n_splits
+            test_preds += np.array(fold_test_preds) / skf.n_splits
 
     # Calculate overall performance
     overall_auc = roc_auc_score(train_labels, oof_preds)
@@ -185,12 +217,9 @@ def main():
 
     # wandb.log({"Overall AUC": overall_auc, "Fold AUC Scores": fold_scores})
 
-    # Save the model
-    torch.save(model.state_dict(), "cnn_embeddings_model_kfold.pth")
-
     # Save test predictions
     sub_df = pd.read_csv("data/sample_submission.csv")
-    sub_df["Recommended IND"] = test_preds
+    sub_df["target"] = test_preds
     sub_df.to_csv("predictions/cnn_embeddings_test_preds.csv", index=False)
 
 
